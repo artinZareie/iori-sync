@@ -21,6 +21,7 @@ import (
 type Config struct {
 	UUID       string `yaml:"uuid"`
 	DeviceName string `yaml:"device_name"`
+	timeout    int    `yaml:"timeout"`
 }
 
 type DeviceInfo struct {
@@ -43,6 +44,7 @@ func loadConfig() Config {
 		defaultConfig := Config{
 			UUID:       defaultUUID,
 			DeviceName: defaultDeviceName,
+			timeout:    60,
 		}
 		saveConfig(defaultConfig)
 	}
@@ -162,7 +164,7 @@ func listServers() {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
 
 	err = resolver.Browse(ctx, "_http._tcp", "local.", entries)

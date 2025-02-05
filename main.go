@@ -21,7 +21,7 @@ import (
 type Config struct {
 	UUID       string `yaml:"uuid"`
 	DeviceName string `yaml:"device_name"`
-	timeout    int    `yaml:"timeout"`
+	Timeout    int    `yaml:"timeout"`
 }
 
 type DeviceInfo struct {
@@ -37,15 +37,18 @@ func loadConfig() Config {
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
 		defaultUUID := uuid.New().String()
 		defaultDeviceName, err := getDeviceName()
+
 		if err != nil {
 			fmt.Println("Error getting device name:", err)
 			os.Exit(1)
 		}
+
 		defaultConfig := Config{
 			UUID:       defaultUUID,
 			DeviceName: defaultDeviceName,
-			timeout:    60,
+			Timeout:    60,
 		}
+
 		saveConfig(defaultConfig)
 	}
 
@@ -113,7 +116,13 @@ func serve(port int, password string) {
 	}))
 
 	http.Handle("/who", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "{\"uuid\":\"%s\",\"device_name\":\"%s\"}", cfg.UUID, cfg.DeviceName)
+		deviceInfo := DeviceInfo{
+			UUID:       cfg.UUID,
+			DeviceName: cfg.DeviceName,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(deviceInfo)
 	}))
 
 	fmt.Printf("Starting server on port %d\n", port)
@@ -164,7 +173,7 @@ func listServers() {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Timeout)*time.Second)
 	defer cancel()
 
 	err = resolver.Browse(ctx, "_http._tcp", "local.", entries)

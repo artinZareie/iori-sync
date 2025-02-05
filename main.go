@@ -13,78 +13,8 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grandcat/zeroconf"
-	"gopkg.in/yaml.v2"
 )
-
-type Config struct {
-	UUID       string `yaml:"uuid"`
-	DeviceName string `yaml:"device_name"`
-	Timeout    int    `yaml:"timeout"`
-}
-
-type DeviceInfo struct {
-	UUID       string `json:"uuid"`
-	DeviceName string `json:"device_name"`
-}
-
-const configFilePath = "config.yaml"
-
-var cfg Config
-
-func loadConfig() Config {
-	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
-		defaultUUID := uuid.New().String()
-		defaultDeviceName, err := getDeviceName()
-
-		if err != nil {
-			fmt.Println("Error getting device name:", err)
-			os.Exit(1)
-		}
-
-		defaultConfig := Config{
-			UUID:       defaultUUID,
-			DeviceName: defaultDeviceName,
-			Timeout:    60,
-		}
-
-		saveConfig(defaultConfig)
-	}
-
-	file, err := os.Open(configFilePath)
-	if err != nil {
-		fmt.Println("Error opening config file:", err)
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	decoder := yaml.NewDecoder(file)
-	var config Config
-	err = decoder.Decode(&config)
-	if err != nil {
-		fmt.Println("Error decoding config file:", err)
-		os.Exit(1)
-	}
-
-	return config
-}
-
-func saveConfig(config Config) {
-	file, err := os.Create(configFilePath)
-	if err != nil {
-		fmt.Println("Error creating config file:", err)
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	encoder := yaml.NewEncoder(file)
-	err = encoder.Encode(&config)
-	if err != nil {
-		fmt.Println("Error encoding config file:", err)
-		os.Exit(1)
-	}
-}
 
 func getDeviceName() (string, error) {
 	cmd := exec.Command("hostname")
@@ -112,18 +42,11 @@ func serve(port int, password string) {
 	defer server.Shutdown()
 
 	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello, world!")
+		// Redirect to who.
+		http.Redirect(w, r, "/who", http.StatusSeeOther)
 	}))
 
-	http.Handle("/who", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		deviceInfo := DeviceInfo{
-			UUID:       cfg.UUID,
-			DeviceName: cfg.DeviceName,
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(deviceInfo)
-	}))
+	http.Handle("/who", http.HandlerFunc(HangleWho))
 
 	fmt.Printf("Starting server on port %d\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
@@ -160,6 +83,14 @@ func listServers() {
 
 					var deviceInfo DeviceInfo
 					err = json.Unmarshal(data, &deviceInfo)
+
+					// TODO: UNCOMMENT
+					// Commented due to debugging.
+					/*
+						if deviceInfo.UUID == cfg.UUID {
+							continue // Skip self
+						}
+					*/
 
 					if err != nil {
 						fmt.Printf("Error decoding /who response from %s: %v\n", url, err)

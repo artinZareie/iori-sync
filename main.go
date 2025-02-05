@@ -164,7 +164,7 @@ func listServers() {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.timeout)*time.Second)
 	defer cancel()
 
 	err = resolver.Browse(ctx, "_http._tcp", "local.", entries)

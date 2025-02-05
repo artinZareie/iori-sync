@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -10,7 +11,6 @@ import (
 	"os/exec"
 	"strings"
 	"text/tabwriter"
-	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,6 +21,11 @@ import (
 type Config struct {
 	UUID       string `yaml:"uuid"`
 	DeviceName string `yaml:"device_name"`
+}
+
+type DeviceInfo struct {
+	UUID       string `json:"uuid"`
+	DeviceName string `json:"device_name"`
 }
 
 const configFilePath = "config.yaml"
@@ -142,7 +147,7 @@ func listServers() {
 					data, _ := io.ReadAll(resp.Body)
 					resp.Body.Close()
 
-					var deviceInfo Config
+					var deviceInfo DeviceInfo
 					err = json.Unmarshal(data, &deviceInfo)
 
 					if err != nil {

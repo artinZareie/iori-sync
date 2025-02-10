@@ -1,0 +1,27 @@
+WARNING: This software is experimental, may contain critical bugs, and poses potential security and privacy risks.  
+Use at your own risk. By using, modifying, or distributing this software, you acknowledge that:  
+1. It is not intended for use in untrusted LAN networks or environments where security is critical.  
+2. The authors and contributors are not liable for damages or breaches caused by its use.  
+3. You are responsible for auditing the code and mitigating risks before deployment.  
+
+Copyright (c) 2025 Artin Zarei
+
+Permission is hereby granted, free of charge, to any person obtaining a copy  
+of this software and associated documentation files (the "Software"), to deal  
+in the Software without restriction, including without limitation the rights  
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell  
+copies of the Software, and to permit persons to whom the Software is  
+furnished to do so, **subject to the following additional conditions**:  
+
+1. The above **copyright notice**, this permission notice (including the security warning), and a direct link to the original software repository must be included in all copies or substantial portions of the Software.  
+
+2. Any modified versions or derivative works must prominently display the following statement:  
+   "This software is derived from Iori-Sync by Artin Zarei. The original software carries inherent security risks, and this derivative work may inherit those risks."  
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR  
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE  
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER  
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,  
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  
+SOFTWARE.  

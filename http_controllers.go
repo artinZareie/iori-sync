@@ -32,7 +32,8 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := db.Where(Device{UUID: device.UUID}).Assign(Device{Name: device.Name}).FirstOrCreate(&device)
+	result := db.Where(Device{UUID: device.UUID}).
+		Assign(Device{Name: device.Name}).FirstOrCreate(&device)
 
 	if result.Error != nil {
 		log.Printf("Database error: %v\n", result.Error)

@@ -14,3 +14,24 @@ func HangleWho(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(deviceInfo)
 }
+
+func HandleRegister(w http.ResponseWriter, r *http.Request) {
+	if !CheckPassword(r.FormValue("password")) {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	device := Device{
+		UUID: r.FormValue("uuid"),
+		Name: r.FormValue("name"),
+	}
+
+	// Save the device in DB if its UUID does not exists, otherwise just update the name.
+	if err := db.Where("uuid = ?", device.UUID).First(&Device{}).Error; err != nil {
+		db.Create(&device)
+	} else {
+		db.Model(&Device{}).Where("uuid = ?", device.UUID).Update("name", device.Name)
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

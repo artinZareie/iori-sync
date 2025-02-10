@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
+	"syscall"
 	"text/tabwriter"
 	"time"
 
@@ -27,12 +29,19 @@ func getDeviceName() (string, error) {
 }
 
 func serve(port int, password string) {
-	if password == "" {
+	if password != "" {
+		cfg.Password = password
+		saveConfig(cfg)
+	} else if cfg.Password == "" {
 		fmt.Println("Error: password is required")
 		os.Exit(1)
 	}
 
-	server, err := zeroconf.Register("IoriSyncServer", "_http._tcp", "local.", port, []string{"txtv=0", "lo=1", "la=2"}, nil)
+	server, err := zeroconf.Register("IoriSyncServer",
+		"_http._tcp", "local.",
+		port,
+		[]string{"txtv=0", "lo=1", "la=2"},
+		nil)
 
 	if err != nil {
 		fmt.Println("Error starting server:", err)
@@ -48,11 +57,18 @@ func serve(port int, password string) {
 
 	http.Handle("/who", http.HandlerFunc(HangleWho))
 
+	http.Handle("/register", http.HandlerFunc(HandleRegister))
+
 	fmt.Printf("Starting server on port %d\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
-func listServers() {
+func listServers(timeout int) {
+	if timeout != cfg.Timeout {
+		cfg.Timeout = timeout
+		saveConfig(cfg)
+	}
+
 	resolver, err := zeroconf.NewResolver(nil)
 
 	if err != nil {
@@ -117,6 +133,49 @@ func listServers() {
 	<-ctx.Done()
 }
 
+func interactive() {
+	err := obtainLock()
+
+	if err != nil {
+		fmt.Println("Another client is already running.")
+		os.Exit(0)
+	}
+
+	defer releaseLock()
+
+	// Interrupt signal
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-sigChan
+		releaseLock()
+		os.Exit(0)
+	}()
+
+	for {
+		fmt.Print("> ")
+		var input string
+		fmt.Scanln(&input)
+		// Only get the first token
+		cmd := strings.Split(input, " ")[0]
+
+		switch cmd {
+		case "exit":
+			os.Exit(0)
+
+		case "list-servers":
+			listServers(5)
+
+		case "ls":
+			listServers(5)
+
+		default:
+			fmt.Println("Ambiguous command:", cmd)
+		}
+	}
+}
+
 func main() {
 	cfg = loadConfig()
 	fmt.Println("===================================")
@@ -131,6 +190,10 @@ func main() {
 
 	listServerCmd := flag.NewFlagSet("list-servers", flag.ExitOnError)
 
+	timeout := listServerCmd.Int("timeout", cfg.Timeout, "Timeout in seconds for server discovery")
+
+	interactiveCmd := flag.NewFlagSet("interactive", flag.ExitOnError)
+
 	if len(os.Args) < 2 {
 		fmt.Println("Please use -h to see available commands.")
 		os.Exit(1)
@@ -140,9 +203,15 @@ func main() {
 	case "serve":
 		serveCmd.Parse(os.Args[2:])
 		serve(*port, *password)
+
 	case "list-servers":
 		listServerCmd.Parse(os.Args[2:])
-		listServers()
+		listServers(*timeout)
+
+	case "interactive":
+		interactiveCmd.Parse(os.Args[2:])
+		interactive()
+
 	default:
 		fmt.Printf("Unknown command: %s\n", os.Args[1])
 		os.Exit(1)

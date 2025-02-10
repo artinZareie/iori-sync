@@ -16,6 +16,7 @@ type Config struct {
 	UUID       string `yaml:"uuid"`
 	DeviceName string `yaml:"device_name"`
 	Timeout    int    `yaml:"timeout"`
+	Password   string `yaml:"password"`
 }
 
 type DeviceInfo struct {
@@ -37,6 +38,7 @@ func loadConfig() Config {
 			UUID:       defaultUUID,
 			DeviceName: defaultDeviceName,
 			Timeout:    60,
+			Password:   "1111",
 		}
 
 		saveConfig(defaultConfig)

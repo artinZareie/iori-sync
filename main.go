@@ -62,11 +62,6 @@ func serve(port int, password string) {
 }
 
 func listServers(timeout int) {
-	if timeout != cfg.Timeout {
-		cfg.Timeout = timeout
-		saveConfig(cfg)
-	}
-
 	resolver, err := zeroconf.NewResolver(nil)
 
 	if err != nil {
@@ -118,7 +113,7 @@ func listServers(timeout int) {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	err = resolver.Browse(ctx, "_http._tcp", "local.", entries)
@@ -133,6 +128,7 @@ func listServers(timeout int) {
 
 func main() {
 	cfg = loadConfig()
+	initDB()
 	fmt.Println("===================================")
 	fmt.Printf("UUID       : %s\n", cfg.UUID)
 	fmt.Printf("Device Name: %s\n", cfg.DeviceName)
@@ -161,6 +157,11 @@ func main() {
 
 	case "list-servers":
 		listServerCmd.Parse(os.Args[2:])
+		if *timeout != 0 && *timeout != cfg.Timeout {
+			cfg.Timeout = *timeout
+			saveConfig(cfg)
+		}
+
 		listServers(*timeout)
 
 	case "interactive":

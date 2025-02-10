@@ -9,9 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strings"
-	"syscall"
 	"text/tabwriter"
 	"time"
 
@@ -131,49 +129,6 @@ func listServers(timeout int) {
 	}
 
 	<-ctx.Done()
-}
-
-func interactive() {
-	err := obtainLock()
-
-	if err != nil {
-		fmt.Println("Another client is already running.")
-		os.Exit(0)
-	}
-
-	defer releaseLock()
-
-	// Interrupt signal
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		releaseLock()
-		os.Exit(0)
-	}()
-
-	for {
-		fmt.Print("> ")
-		var input string
-		fmt.Scanln(&input)
-		// Only get the first token
-		cmd := strings.Split(input, " ")[0]
-
-		switch cmd {
-		case "exit":
-			os.Exit(0)
-
-		case "list-servers":
-			listServers(5)
-
-		case "ls":
-			listServers(5)
-
-		default:
-			fmt.Println("Ambiguous command:", cmd)
-		}
-	}
 }
 
 func main() {

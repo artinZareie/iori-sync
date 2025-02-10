@@ -114,7 +114,7 @@ func interactiveHelp() {
 
 func interactiveConnect() {
 	fmt.Println("Searching for servers...")
-	fmt.Println("==============================================================================")
+	fmt.Println("==========================================================================================")
 
 	servers, err := getServers(cfg.Timeout)
 
@@ -123,15 +123,15 @@ func interactiveConnect() {
 		return
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
-	fmt.Fprintln(w, "IP\tPort\tUUID\tDevice Name")
-	fmt.Fprintln(w, "--\t----\t----\t-----------")
-	for _, s := range servers {
-		fmt.Fprintf(w, "%s\t%d\t%s\t%s\n", s.IP, s.Port, s.UUID, s.DeviceName)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 5, ' ', 0)
+	fmt.Fprintln(w, "Row\tIP\tPort\tUUID\tDevice Name")
+	fmt.Fprintln(w, "---\t--\t----\t----\t-----------")
+	for i, s := range servers {
+		fmt.Fprintf(w, "%d\t%s\t%d\t%s\t%s\n", i+1, s.IP, s.Port, s.UUID, s.DeviceName)
 	}
 	w.Flush()
 
-	fmt.Println("==============================================================================")
+	fmt.Println("==========================================================================================")
 
 	for {
 		fmt.Printf("\nPlease enter the number of the server you want to connect to: ")
@@ -206,7 +206,7 @@ func interactive() {
 			fmt.Println("Unknown command, please use \"help\" to see available commands.")
 		}
 
-		if cmd == "help" {
+		if cmd == "help" || cmd == "h" {
 			interactiveHelp()
 		}
 	}

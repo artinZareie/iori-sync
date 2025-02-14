@@ -1,20 +1,11 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"strings"
-	"text/tabwriter"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/grandcat/zeroconf"
 )
 
 func getDeviceName() (string, error) {
@@ -25,113 +16,6 @@ func getDeviceName() (string, error) {
 	}
 
 	return strings.TrimSpace(string(output)), nil
-}
-
-func serve(port int, password string) {
-	if password != "" {
-		cfg.Password = password
-		saveConfig(cfg)
-	} else if cfg.Password == "" {
-		fmt.Println("Error: password is required")
-		os.Exit(1)
-	}
-
-	server, err := zeroconf.Register("IoriSyncServer",
-		"_http._tcp", "local.",
-		port,
-		[]string{"txtv=0", "lo=1", "la=2"},
-		nil)
-
-	if err != nil {
-		fmt.Println("Error starting server:", err)
-		os.Exit(1)
-	}
-
-	defer server.Shutdown()
-
-	// Initialize Gin router
-	router := gin.Default()
-
-	// Route handlers
-	router.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusSeeOther, "/who")
-	})
-
-	router.GET("/who", func(c *gin.Context) {
-		HandleWho(c)
-	})
-
-	router.POST("/register", func(c *gin.Context) {
-		HandleRegister(c)
-	})
-
-	fmt.Printf("Starting server on port %d\n", port)
-	router.Run(fmt.Sprintf(":%d", port))
-}
-
-func listServers(timeout int) {
-	resolver, err := zeroconf.NewResolver(nil)
-
-	if err != nil {
-		fmt.Println("Error creating resolver:", err)
-		os.Exit(1)
-	}
-
-	entries := make(chan *zeroconf.ServiceEntry)
-
-	go func() {
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.Debug)
-		defer w.Flush()
-		fmt.Fprintln(w, "IP\tPort\tUUID\tDevice Name")
-
-		for entry := range entries {
-			if entry.ServiceRecord.Instance == "IoriSyncServer" {
-				for _, ip := range entry.AddrIPv4 {
-					url := fmt.Sprintf("http://%s:%d/who", ip, entry.Port)
-					resp, err := http.Get(url)
-
-					if err != nil {
-						fmt.Printf("Error fetching /who from %s: %v\n", url, err)
-						continue
-					}
-
-					data, _ := io.ReadAll(resp.Body)
-					resp.Body.Close()
-
-					var deviceInfo DeviceInfo
-					err = json.Unmarshal(data, &deviceInfo)
-
-					// TODO: UNCOMMENT
-					// Commented due to debugging.
-					/*
-						if deviceInfo.UUID == cfg.UUID {
-							continue // Skip self
-						}
-					*/
-
-					if err != nil {
-						fmt.Printf("Error decoding /who response from %s: %v\n", url, err)
-						continue
-					}
-
-					fmt.Fprintf(w, "%s\t%d\t%s\t%s\n", ip, entry.Port, deviceInfo.UUID, deviceInfo.DeviceName)
-					w.Flush()
-				}
-			}
-		}
-	}()
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	defer cancel()
-
-	err = resolver.Browse(ctx, "_http._tcp", "local.", entries)
-
-	if err != nil {
-		fmt.Println("Error browsing for servers:", err)
-		os.Exit(1)
-	}
-
-	<-ctx.Done()
 }
 
 func main() {

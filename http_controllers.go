@@ -1,34 +1,34 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func HangleWho(w http.ResponseWriter, r *http.Request) {
+func HandleWho(c *gin.Context) {
 	deviceInfo := DeviceInfo{
 		UUID:       cfg.UUID,
 		DeviceName: cfg.DeviceName,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(deviceInfo)
+	c.JSON(http.StatusOK, deviceInfo)
 }
 
-func HandleRegister(w http.ResponseWriter, r *http.Request) {
-	if !CheckPassword(r.FormValue("password")) {
-		w.WriteHeader(http.StatusUnauthorized)
+func HandleRegister(c *gin.Context) {
+	if !CheckPassword(c.PostForm("password")) {
+		c.Status(http.StatusUnauthorized)
 		return
 	}
 
 	device := Device{
-		UUID: r.FormValue("uuid"),
-		Name: r.FormValue("name"),
+		UUID: c.PostForm("uuid"),
+		Name: c.PostForm("name"),
 	}
 
 	if db == nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
@@ -37,9 +37,9 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 
 	if result.Error != nil {
 		log.Printf("Database error: %v\n", result.Error)
-		w.WriteHeader(http.StatusInternalServerError)
+		c.Status(http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	c.Status(http.StatusOK)
 }

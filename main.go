@@ -13,6 +13,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/grandcat/zeroconf"
 )
 
@@ -48,17 +49,24 @@ func serve(port int, password string) {
 
 	defer server.Shutdown()
 
-	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Redirect to who.
-		http.Redirect(w, r, "/who", http.StatusSeeOther)
-	}))
+	// Initialize Gin router
+	router := gin.Default()
 
-	http.Handle("/who", http.HandlerFunc(HangleWho))
+	// Route handlers
+	router.GET("/", func(c *gin.Context) {
+		c.Redirect(http.StatusSeeOther, "/who")
+	})
 
-	http.Handle("/register", http.HandlerFunc(HandleRegister))
+	router.GET("/who", func(c *gin.Context) {
+		HandleWho(c)
+	})
+
+	router.POST("/register", func(c *gin.Context) {
+		HandleRegister(c)
+	})
 
 	fmt.Printf("Starting server on port %d\n", port)
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	router.Run(fmt.Sprintf(":%d", port))
 }
 
 func listServers(timeout int) {

@@ -4,6 +4,7 @@ go 1.23.4
 
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grandcat/zeroconf v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect

@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"text/tabwriter"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type Command struct {
@@ -47,6 +50,12 @@ var commands = []Command{
 		Abbr: "c",
 		Help: "Connect to a server",
 		Func: interactiveConnect,
+	},
+	{
+		Name: "test",
+		Abbr: "t",
+		Help: "For debugging purposes",
+		Func: interactiveTest,
 	},
 }
 
@@ -165,6 +174,44 @@ func interactiveConnect() {
 		defer resp.Body.Close()
 		return
 	}
+}
+
+func interactiveTest() {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal("Error creating watcher:", err)
+		os.Exit(1)
+	}
+	defer watcher.Close()
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+
+				log.Println("Event:", event)
+
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+
+				log.Println("Error:", err)
+			}
+		}
+	}()
+
+	watcher.Add("./test")
+
+	if err != nil {
+		log.Fatal("Error watching file:", err)
+		os.Exit(1)
+	}
+
+	<-make(chan struct{})
 }
 
 func interactive() {

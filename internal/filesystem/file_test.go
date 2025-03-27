@@ -47,7 +47,7 @@ func TestWalkAsList(t *testing.T) {
 	if len(files) != len(expectedPaths) {
 		t.Errorf("expected %d entries, got %d", len(expectedPaths), len(files))
 		for _, file := range files {
-			t.Logf("Path: %s, IsDir: %v", file.Path, file.Info.IsDir())
+			t.Logf("Path: %s, Name: %s, IsDir: %v", file.Path, file.Info.Name(), file.Info.IsDir())
 		}
 	}
 

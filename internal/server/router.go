@@ -9,7 +9,11 @@ var routeTable = map[string]RouteConfig{
 	"/": {
 		Methods: []string{"GET"},
 		Handler: func(c *gin.Context) {
-			files, err := filesystem.WalkAsList(".")
+			// Exclude all .git files
+			var exclude []filesystem.FileGuard = make([]filesystem.FileGuard, 0)
+			exclude = append(exclude, &filesystem.RegexPathRejectorGuard{Regex: "\\.git(/.*$)*"})
+
+			files, err := filesystem.WalkAsListGuarded(".", exclude)
 			var filesJson []filesystem.FileJSON = make([]filesystem.FileJSON, 0)
 
 			for _, file := range files {

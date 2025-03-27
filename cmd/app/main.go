@@ -1,18 +1,7 @@
 package main
 
-import (
-	"fmt"
-	"log"
-
-	"github.com/artinZareie/iori-sync/internal/filesystem"
-)
+import "github.com/artinZareie/iori-sync/internal/server"
 
 func main() {
-	files, err := filesystem.WalkAsList("./")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(files[0].Info.IsDir())
+	server.StartServer(3000)
 }

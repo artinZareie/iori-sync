@@ -2,7 +2,10 @@ package filesystem
 
 import (
 	"io/fs"
+	"log"
 	"path/filepath"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 func WalkAsList(path string) ([]File, error) {
@@ -21,4 +24,22 @@ func WalkAsList(path string) ([]File, error) {
 	})
 
 	return folderList, err
+}
+
+// TODO: Add rules to each watch path.
+// NOTE: This function is incomplete and requires additional implementation.
+func Watch(paths []string, feedback func()) {
+	watcher, err := fsnotify.NewWatcher()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer watcher.Close()
+
+	for _, path := range paths {
+		watcher.Add(path)
+	}
+
+	<-make(chan struct{})
 }

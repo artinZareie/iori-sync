@@ -9,4 +9,4 @@ clean:
 
 count:
 	find . -type f -name "*.go" | xargs cat | wc -l
-	find . -type f -name "*.go" -exec wc -l {} +
+	find . -type f -name "*.go" -exec wc -l {} \; | sort -n

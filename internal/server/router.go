@@ -1,6 +1,10 @@
 package server
 
 import (
+	"fmt"
+	"log"
+
+	"github.com/artinZareie/iori-sync/internal/database"
 	"github.com/artinZareie/iori-sync/internal/filesystem"
 	"github.com/gin-gonic/gin"
 )
@@ -9,23 +13,47 @@ var routeTable = map[string]RouteConfig{
 	"/": {
 		Methods: []string{"GET"},
 		Handler: func(c *gin.Context) {
-			// Exclude all .git files
-			var exclude []filesystem.FileGuard = make([]filesystem.FileGuard, 0)
-			exclude = append(exclude, &filesystem.RegexPathRejectorGuard{Regex: "\\.git(/.*$)*"})
+			// Show all directories in the db.
+			db := database.GetDB()
+			var watchDirs []database.WatchDirectory
 
-			files, err := filesystem.WalkAsListGuarded(".", exclude)
-			var filesJson []filesystem.FileJSON = make([]filesystem.FileJSON, 0)
-
-			for _, file := range files {
-				filesJson = append(filesJson, file.ToFileJSON())
-			}
-
-			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
+			if err := db.Preload("PathRules").Find(&watchDirs).Error; err != nil {
+				c.JSON(500, gin.H{"error": "Failed to retrieve watch directories"})
 				return
 			}
 
-			c.JSON(200, filesJson)
+			response := make([]database.WatchDirectoryJSON, len(watchDirs))
+
+			for x := range watchDirs {
+				fmt.Println(watchDirs[x].Path)
+
+				guards := make([]filesystem.FileGuard, len(watchDirs[x].PathRules))
+				for i, rule := range watchDirs[x].PathRules {
+					guards[i] = rule.ToFileGuard()
+				}
+
+				files, err := filesystem.WalkAsListGuarded(watchDirs[x].Path, guards)
+
+				if err != nil {
+					c.JSON(500, gin.H{"error": "Failed to walk the directory"})
+					log.Fatal("Error while walking the directory:", err)
+					return
+				}
+
+				filesJSON := make([]filesystem.FileJSON, len(files))
+
+				for i, file := range files {
+					filesJSON[i] = file.ToFileJSON()
+				}
+
+				response = append(response, database.WatchDirectoryJSON{
+					Path:        watchDirs[x].Path,
+					ReadOnly:    watchDirs[x].ReadOnly,
+					Containings: filesJSON,
+				})
+			}
+
+			c.JSON(200, response)
 		},
 	},
 }

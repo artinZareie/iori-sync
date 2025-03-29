@@ -51,6 +51,8 @@ var routeTable = map[string]RouteConfig{
 					ReadOnly:    watchDirs[x].ReadOnly,
 					Containings: filesJSON,
 				})
+
+				// Just a test comment
 			}
 
 			c.JSON(200, response)

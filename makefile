@@ -1,6 +1,9 @@
 run:
 	go run ./cmd/app/main.go
 
+watch:
+	air
+
 compile:
 	go build -o ./bin/app ./cmd/app/main.go
 

@@ -8,16 +8,28 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-func WalkAsList(path string) ([]File, error) {
+// Lists all containing directories and files in a given path. This function
+// returns a list of File structs. All returned paths are calculated relatively to the
+// base path, for security reasons.
+func WalkAsList(basePath string) ([]File, error) {
+	basePath = filepath.Clean(basePath)
+
 	folderList := make([]File, 0)
 
-	err := filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
+	err := filepath.Walk(basePath, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		var relPath string
+		relPath, err = filepath.Rel(basePath, path)
+
 		if err != nil {
 			return err
 		}
 
 		folderList = append(folderList, File{
-			Path: path,
+			Path: relPath,
 			Info: info,
 		})
 		return nil
@@ -26,23 +38,16 @@ func WalkAsList(path string) ([]File, error) {
 	return folderList, err
 }
 
-func WalkAsListGuarded(path string, guards []FileGuard) ([]File, error) {
-	folderList := make([]File, 0)
-
-	err := filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		folderList = append(folderList, File{
-			Path: path,
-			Info: info,
-		})
-		return nil
-	})
-
-	return FileGuardFilterFiles(folderList, guards), err
+// Lists all containing directories and files in a given path. This function
+// returns a list of File structs. All returned paths are calculated relatively to the
+// base path, for security reasons. Additionally, this function filters the files
+// based on the provided guards.
+func WalkAsListGuarded(basePath string, guards []FileGuard) ([]File, error) {
+	fileList, err := WalkAsList(basePath)
+	return FileGuardFilterFiles(fileList, guards), err
 }
+
+// TODO: Add WalkAsTree and WalkAsTreeGuarded
 
 // TODO: Add rules to each watch path.
 // NOTE: This function is incomplete and requires additional implementation.

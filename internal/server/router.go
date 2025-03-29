@@ -1,9 +1,7 @@
 package server
 
 import (
-	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/artinZareie/iori-sync/internal/database"
 	"github.com/artinZareie/iori-sync/internal/filesystem"
@@ -26,10 +24,6 @@ var routeTable = map[string]RouteConfig{
 			response := make([]database.WatchDirectoryJSON, len(watchDirs))
 
 			for x := range watchDirs {
-				fmt.Println(watchDirs[x].Path)
-				abs, _ := filepath.Abs(watchDirs[x].Path)
-				fmt.Println("Absolute: ", abs)
-
 				guards := make([]filesystem.FileGuard, len(watchDirs[x].PathRules))
 				for i, rule := range watchDirs[x].PathRules {
 					guards[i] = rule.ToFileGuard()

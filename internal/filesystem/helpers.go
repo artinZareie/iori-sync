@@ -43,32 +43,11 @@ func WalkAsList(basePath string) ([]File, error) {
 // base path, for security reasons. Additionally, this function filters the files
 // based on the provided guards.
 func WalkAsListGuarded(basePath string, guards []FileGuard) ([]File, error) {
-	basePath = filepath.Clean(basePath)
-	basePath, _ = filepath.Abs(basePath)
-
-	folderList := make([]File, 0)
-
-	err := filepath.Walk(basePath, func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		var relPath string
-		relPath, err = filepath.Rel(basePath, path)
-
-		if err != nil {
-			return err
-		}
-
-		folderList = append(folderList, File{
-			Path: relPath,
-			Info: info,
-		})
-		return nil
-	})
-
-	return FileGuardFilterFiles(folderList, guards), err
+	fileList, err := WalkAsList(basePath)
+	return FileGuardFilterFiles(fileList, guards), err
 }
+
+// TODO: Add WalkAsTree and WalkAsTreeGuarded
 
 // TODO: Add rules to each watch path.
 // NOTE: This function is incomplete and requires additional implementation.
